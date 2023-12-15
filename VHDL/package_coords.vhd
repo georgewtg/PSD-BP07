@@ -5,6 +5,6 @@ use IEEE.numeric_std.all;
 
 package package_coords is
     
-    type coords is array (0 to 255, 0 to 255) of std_logic;
+    type coords is array (-255 to 256, -255 to 256) of std_logic;
     
 end package package_coords;

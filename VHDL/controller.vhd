@@ -6,10 +6,12 @@ use work.package_coords.all;
 
 entity controller is
     port (
-        CLK : in std_logic;
-        ENABLE : in std_logic;
-        instruction : in std_logic_vector (2 downto 0);
-        A : in integer -- acts as slope for linear graphs
+        CLK : in std_logic := '0';
+        ENABLE : in std_logic := '1';
+        instruction : in std_logic_vector (2 downto 0) := "110";
+        A : in integer := 1; -- constant A
+        B : in integer := 0; -- constant B
+        C : in integer := 0  -- constant C
     );
 end entity controller;
 
@@ -20,7 +22,9 @@ architecture rtl of controller is
             PRG_CNT : in integer; -- Program counter
             enable : in std_logic;
             OPCODE : in std_logic_vector (2 downto 0); -- Opcode of instruction 
-            OPERAND1 : in integer; -- Slope
+            OPERAND1 : in integer; -- constant A
+            OPERAND2 : in integer; -- constant B
+            OPERAND3 : in integer; -- constant C
             PIXELS : out coords;
             done : out std_logic
         );
@@ -38,13 +42,15 @@ architecture rtl of controller is
     signal en_alu, en_graph : std_logic := '0';
     signal data : coords;
     signal operand1 : integer;
+    signal operand2 : integer;
+    signal operand3 : integer;
     signal ex_done, write_done : std_logic;
 
     type state_type is (IDLE, FETCH, DECODE, EXECUTE, WRITE, COMPLETE);
     signal state : state_type := IDLE;
     signal PRG_CNT : integer := 0;
 begin
-    alu_0 : alu port map (PRG_CNT, en_alu, opcode, operand1, data, ex_done);
+    alu_0 : alu port map (PRG_CNT, en_alu, opcode, operand1, operand2, operand3, data, ex_done);
     graph_plotter_0 : graph_plotter port map (en_graph, data, write_done);
 
     data_flow: process(clk)
@@ -68,6 +74,8 @@ begin
                     end if;
                 when EXECUTE =>
                     operand1 <= A;
+                    operand2 <= B;
+                    operand3 <= C;
                     en_alu <= '1';
 
                     if ex_done = '1' then
