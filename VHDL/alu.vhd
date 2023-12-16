@@ -248,6 +248,8 @@ begin
                     -- set m to always be positive
                     if operand1 < 0 then
                         temp_operand := -operand1;
+                    else
+                        temp_operand := operand1;
                     end if;
 
                     --set offset
@@ -292,6 +294,8 @@ begin
                     -- set m to always be positive
                     if operand1 < 0 then
                         temp_operand := -operand1;
+                    else
+                        temp_operand := operand1;
                     end if;
 
                     -- set pixels on x = 0
@@ -357,19 +361,17 @@ begin
 
                         -- set remaining pixels (mirrored)
                         for i in 1 to 256 loop
-                            for j in 1 to 256 loop
-                                if j = temp_operand and temp_operand = operand1 * i * i + operand3 then
-                                    for k in 1 to 256 - j loop
-                                        if i + operand2 + 1 <= 256 and j + k <= 256 then
-                                            result(i + operand2 + 1, j + k) := '0';
-                                        end if;
-                                        if -i + operand2 - 1 >= -255 and j + k <= 256 then
-                                            result(-i + operand2 - 1, j + k) := '0';
-                                        end if;
-                                    end loop;
-                                    exit;
-                                end if;
-                            end loop;
+                            if temp_operand = operand1 * i * i + operand3 then
+                                for k in 1 to 256 - temp_operand loop
+                                    if i + operand2 + 1 <= 256 and temp_operand + k <= 256 then
+                                        result(i + operand2 + 1, temp_operand + k) := '0';
+                                    end if;
+                                    if -i + operand2 - 1 >= -255 and temp_operand + k <= 256 then
+                                        result(-i + operand2 - 1, temp_operand + k) := '0';
+                                    end if;
+                                end loop;
+                                exit;
+                            end if;
                         end loop;
 
 
@@ -395,60 +397,51 @@ begin
 
                         -- set remaining pixels (mirrored)
                         for i in 1 to 256 loop
-                            for j in -255 to 256 loop
-                                if j = temp_operand and temp_operand = operand1 * i * i + operand3 then
-                                    for k in -1 downto -255 - j loop
-                                        if i + operand2 + 1 <= 256 and j + k >= -255 then
-                                            result(i + operand2 + 1, j + k) := '0';
-                                        end if;
-                                        if -i + operand2 - 1 >= -255 and j + k >= -255 then
-                                            result(-i + operand2 - 1, j + k) := '0';
-                                        end if;
-                                    end loop;
-                                    exit;
-                                end if;
-                            end loop;
+                            if temp_operand = operand1 * i * i + operand3 then
+                                for k in -1 downto -255 - temp_operand loop
+                                    if i + operand2 + 1 <= 256 and temp_operand + k >= -255 then
+                                        result(i + operand2 + 1, temp_operand + k) := '0';
+                                    end if;
+                                    if -i + operand2 - 1 >= -255 and temp_operand + k >= -255 then
+                                        result(-i + operand2 - 1, temp_operand + k) := '0';
+                                    end if;
+                                end loop;
+                                exit;
+                            end if;
                         end loop;
                     end if;
 
 
-                when "110" => -- cubic graph, a = operand1, b = operand2, c = operand3 , y = ax^3 + bx + c
+                when "101" => -- quadratic graph, a = 1/operand1, b = operand2, c = operand3 , y = a(x-b)^2 + c
+                    --set offset
+                    if operand1 mod 2 = 0 then
+                        offset := 1;
+                    end if;
+
                     -- set pixels on x = 0
-                    result(operand2, operand3) := '0';
+                    for k in 0 to operand1 / 2 - offset loop
+                        result(operand2 + k, operand3) := '0';
+                        result(operand2 - k, operand3) := '0';
+                    end loop;
+                    for k in 0 downto operand1 / 2 + offset loop
+                        result(operand2 + k, operand3) := '0';
+                        result(operand2 - k, operand3) := '0';
+                    end loop;
                     temp_operand := operand3;
-                    temp_operand_2 := operand3;
                     
                     if operand1 >= 0 then -- positive graph
-                        -- set pixels (mirrored upside down)
+                        -- set pixels (mirrored)
                         for i in 1 to 256 loop
                             for j in -255 to 256 loop
-                                if j = operand1 * i * i then
-                                    for k in 0 to j + operand3 - temp_operand - 1 loop
-                                        if j - k + operand3 <= 256 and j - k + operand3 >= -255 and i + operand2 <= 256 then
+                                if j = i * i / operand1 + operand3 then
+                                    for k in 0 to j - temp_operand - 1 loop
+                                        if j - k <= 256 and i + operand2 <= 256 then
                                             temp_operand := j;
-                                            result(i + operand2, j - k + operand3) := '0';
+                                            result(i + operand2, j - k) := '0';
                                         end if;
-                                        --if -(j - k) + operand3 <= 256 and -(j - k) + operand3 >= -255 and -i + operand2 >= -255 then
-                                            --temp_operand := j;
-                                            --result(-i + operand2, -(j - k)  + operand3) := '0';
-                                        --end if;
-                                    end loop;
-                                    exit;
-                                end if;
-                            end loop;
-                        
-
-                        -- not done
-                        -- set remaining pixels (mirrored upside down)
-                        for i in 1 to 256 loop
-                            for j in 1 to 256 loop
-                                if j = temp_operand and temp_operand = operand1 * i * i + operand3 then
-                                    for k in 1 to 256 - j loop
-                                        if i + operand2 + 1 <= 256 and j + k <= 256 then
-                                            result(i + operand2 + 1, j + k) := '0';
-                                        end if;
-                                        if -i + operand2 - 1 >= -255 and -(j + k) >= -255 then
-                                            result(-i + operand2 - 1, -(j + k)) := '0';
+                                        if j - k <= 256 and -i + operand2 >= -255 then
+                                            temp_operand := j;
+                                            result(-i + operand2, j - k) := '0';
                                         end if;
                                     end loop;
                                     exit;
@@ -456,12 +449,27 @@ begin
                             end loop;
                         end loop;
 
+                        -- set remaining pixels (mirrored)
+                        for i in 1 to 256 loop
+                            if temp_operand =  i * i / operand1 + operand3 then
+                                for k in 1 to 256 - temp_operand loop
+                                    if i + operand2 + 1 <= 256 and temp_operand + k <= 256 then
+                                        result(i + operand2 + 1, temp_operand + k) := '0';
+                                    end if;
+                                    if -i + operand2 - 1 >= -255 and temp_operand + k <= 256 then
+                                        result(-i + operand2 - 1, temp_operand + k) := '0';
+                                    end if;
+                                end loop;
+                                exit;
+                            end if;
+                        end loop;
+
 
                     else -- negative graph
-                        -- set pixels (mirrored upside down)
+                        -- set pixels (mirrored)
                         for i in 1 to 256 loop
                             for j in -255 to 256 loop
-                                if j = operand1 * i * i + operand3 then
+                                if j = i * i / operand1 + operand3 then
                                     for k in 0 downto j - temp_operand + 1 loop
                                         if j - k >= -255 and i + operand2 <= 256 then
                                             temp_operand := j;
@@ -477,21 +485,261 @@ begin
                             end loop;
                         end loop;
 
-                        -- set remaining pixels (mirrored upside down)
+                        -- set remaining pixels (mirrored)
                         for i in 1 to 256 loop
-                            for j in -255 to 256 loop
-                                if j = temp_operand and temp_operand = operand1 * i * i + operand3 then
-                                    for k in -1 downto -255 - j loop
-                                        if i + operand2 + 1 <= 256 and j + k >= -255 then
-                                            result(i + operand2 + 1, j + k) := '0';
-                                        end if;
-                                        if -i + operand2 - 1 >= -255 and j + k >= -255 then
-                                            result(-i + operand2 - 1, j + k) := '0';
+                            if temp_operand = i * i / operand1 + operand3 then
+                                for k in -1 downto -255 - temp_operand loop
+                                    if i + operand2 + 1 <= 256 and temp_operand + k >= -255 then
+                                        result(i + operand2 + 1, temp_operand + k) := '0';
+                                    end if;
+                                    if -i + operand2 - 1 >= -255 and temp_operand + k >= -255 then
+                                        result(-i + operand2 - 1, temp_operand + k) := '0';
+                                    end if;
+                                end loop;
+                                exit;
+                            end if;
+                        end loop;
+                    end if;
+
+
+                when "110" => -- cubic graph, a = operand1, b = operand2, c = operand3 , y = a(x-b)^3 + c
+                    -- set pixels on x = 0
+                    result(operand2, operand3) := '0';
+                    temp_operand := operand3;
+                    temp_operand_2 := operand3;
+                    
+                    if operand1 >= 0 then -- positive graph
+                        -- set pixels
+                        for i in -1 downto -255 + operand2 loop
+                            for j in -255 to operand3 - 1 loop
+                                if j = operand1 * i * i * i + operand3 then
+                                    for k in 0 downto j - temp_operand_2 + 1 loop
+                                        if j - k >= -255 and i + operand2 >= -255 then
+                                            temp_operand_2 := j;
+                                            result(i + operand2, j - k) := '0';
                                         end if;
                                     end loop;
                                     exit;
                                 end if;
                             end loop;
+                        end loop;
+
+                        for i in 1 to 256 + operand2 loop
+                            for j in operand3 + 1 to 256 loop
+                                if j = operand1 * i * i * i + operand3 then
+                                    for k in 0 to j - temp_operand - 1 loop
+                                        if j - k <= 256 and i + operand2 <= 256 then
+                                            temp_operand := j;
+                                            result(i + operand2, j - k) := '0';
+                                        end if;
+                                    end loop;
+                                    exit;
+                                end if;
+                            end loop;
+                        end loop;
+
+                        -- set remaining pixels (mirrored)
+                        for i in -1 downto -255 + operand2 loop
+                            if temp_operand_2 = operand1 * i * i * i + operand3 then
+                                for k in -1 downto -255 - temp_operand_2 loop
+                                    if temp_operand_2 + k >= -255 and i + operand2 - 1 >= -255 then
+                                        result(i + operand2 - 1, temp_operand_2 + k) := '0';
+                                    end if;
+                                end loop;
+                                exit;
+                            end if;
+                        end loop;
+
+                        for i in 1 to 256 + operand2 loop
+                            if temp_operand = operand1 * i * i * i + operand3 then
+                                for k in 1 to 256 - temp_operand loop
+                                    if temp_operand + k <= 256 and i + operand2 + 1 <= 256 then
+                                        result(i + operand2 + 1, temp_operand + k) := '0';
+                                    end if;
+                                end loop;
+                                exit;
+                            end if;
+                        end loop;
+
+
+                    else -- negative graph
+                        -- set pixels
+                        for i in -1 downto -255 + operand2 loop
+                            for j in operand3 + 1 to 256 loop
+                                if j = operand1 * i * i * i + operand3 then
+                                    for k in 0 to j - temp_operand_2 - 1 loop
+                                        if j - k >= -255 and i + operand2 >= -255 then
+                                            temp_operand_2 := j;
+                                            result(i + operand2, j - k) := '0';
+                                        end if;
+                                    end loop;
+                                    exit;
+                                end if;
+                            end loop;
+                        end loop;
+
+                        for i in 1 to 256 + operand2 loop
+                            for j in -255 to operand3 - 1 loop
+                                if j = operand1 * i * i * i + operand3 then
+                                    for k in 0 downto j - temp_operand + 1 loop
+                                        if j - k <= 256 and i + operand2 <= 256 then
+                                            temp_operand := j;
+                                            result(i + operand2, j - k) := '0';
+                                        end if;
+                                    end loop;
+                                    exit;
+                                end if;
+                            end loop;
+                        end loop;
+
+                        -- set remaining pixels (mirrored)
+                        for i in -1 downto -255 + operand2 loop
+                            if temp_operand_2 = operand1 * i * i * i + operand3 then
+                                for k in 1 to 256 - temp_operand_2 loop
+                                    if temp_operand_2 + k <= 256 and i + operand2 - 1 <= 256 then
+                                        result(i + operand2 - 1, temp_operand_2 + k) := '0';
+                                    end if;
+                                end loop;
+                                exit;
+                            end if;
+                        end loop;
+
+                        for i in 1 to 256 + operand2 loop
+                            if temp_operand = operand1 * i * i * i + operand3 then
+                                for k in -1 downto -255 - temp_operand loop
+                                    if temp_operand + k >= -255 and i + operand2 + 1 >= -255 then
+                                        result(i + operand2 + 1, temp_operand + k) := '0';
+                                    end if;
+                                end loop;
+                                exit;
+                            end if;
+                        end loop;
+                    end if;
+
+
+                when "111" => -- cubic graph, a = 1/operand1, b = operand2, c = operand3 , y = a(x-b)^3 + c
+                    --set offset
+                    if operand1 mod 2 = 0 then
+                        offset := 1;
+                    end if;
+
+                    -- set pixels on x = 0
+                    for k in 0 to operand1 / 3 - offset loop
+                        result(operand2 + k, operand3) := '0';
+                        result(operand2 - k, operand3) := '0';
+                    end loop;
+                    for k in 0 downto operand1 / 3 + offset loop
+                        result(operand2 + k, operand3) := '0';
+                        result(operand2 - k, operand3) := '0';
+                    end loop;
+                    temp_operand := operand3;
+                    temp_operand_2 := operand3;
+                    
+                    if operand1 >= 0 then -- positive graph
+                        -- set pixels
+                        for i in -1 downto -255 + operand2 loop
+                            for j in -255 to operand3 - 1 loop
+                                if j = i * i * i / operand1 + operand3 then
+                                    for k in 0 downto j - temp_operand_2 + 1 loop
+                                        if j - k >= -255 and i + operand2 >= -255 then
+                                            temp_operand_2 := j;
+                                            result(i + operand2, j - k) := '0';
+                                        end if;
+                                    end loop;
+                                    exit;
+                                end if;
+                            end loop;
+                        end loop;
+
+                        for i in 1 to 256 + operand2 loop
+                            for j in operand3 + 1 to 256 loop
+                                if j = i * i * i / operand1 + operand3 then
+                                    for k in 0 to j - temp_operand - 1 loop
+                                        if j - k <= 256 and i + operand2 <= 256 then
+                                            temp_operand := j;
+                                            result(i + operand2, j - k) := '0';
+                                        end if;
+                                    end loop;
+                                    exit;
+                                end if;
+                            end loop;
+                        end loop;
+
+                        -- set remaining pixels (mirrored)
+                        for i in -1 downto -255 + operand2 loop
+                            if temp_operand_2 = i * i * i / operand1 + operand3 then
+                                for k in -1 downto -255 - temp_operand_2 loop
+                                    if temp_operand_2 + k >= -255 and i + operand2 - 1 >= -255 then
+                                        result(i + operand2 - 1, temp_operand_2 + k) := '0';
+                                    end if;
+                                end loop;
+                                exit;
+                            end if;
+                        end loop;
+
+                        for i in 1 to 256 + operand2 loop
+                            if temp_operand = i * i * i / operand1 + operand3 then
+                                for k in 1 to 256 - temp_operand loop
+                                    if temp_operand + k <= 256 and i + operand2 + 1 <= 256 then
+                                        result(i + operand2 + 1, temp_operand + k) := '0';
+                                    end if;
+                                end loop;
+                                exit;
+                            end if;
+                        end loop;
+
+
+                    else -- negative graph
+                        -- set pixels
+                        for i in -1 downto -255 + operand2 loop
+                            for j in operand3 + 1 to 256 loop
+                                if j = i * i * i / operand1 + operand3 then
+                                    for k in 0 to j - temp_operand_2 - 1 loop
+                                        if j - k >= -255 and i + operand2 >= -255 then
+                                            temp_operand_2 := j;
+                                            result(i + operand2, j - k) := '0';
+                                        end if;
+                                    end loop;
+                                    exit;
+                                end if;
+                            end loop;
+                        end loop;
+
+                        for i in 1 to 256 + operand2 loop
+                            for j in -255 to operand3 - 1 loop
+                                if j = i * i * i / operand1 + operand3 then
+                                    for k in 0 downto j - temp_operand + 1 loop
+                                        if j - k <= 256 and i + operand2 <= 256 then
+                                            temp_operand := j;
+                                            result(i + operand2, j - k) := '0';
+                                        end if;
+                                    end loop;
+                                    exit;
+                                end if;
+                            end loop;
+                        end loop;
+
+                        -- set remaining pixels (mirrored)
+                        for i in -1 downto -255 + operand2 loop
+                            if temp_operand_2 = i * i * i / operand1 + operand3 then
+                                for k in 1 to 256 - temp_operand_2 loop
+                                    if temp_operand_2 + k <= 256 and i + operand2 - 1 <= 256 then
+                                        result(i + operand2 - 1, temp_operand_2 + k) := '0';
+                                    end if;
+                                end loop;
+                                exit;
+                            end if;
+                        end loop;
+
+                        for i in 1 to 256 + operand2 loop
+                            if temp_operand = i * i * i / operand1 + operand3 then
+                                for k in -1 downto -255 - temp_operand loop
+                                    if temp_operand + k >= -255 and i + operand2 + 1 >= -255 then
+                                        result(i + operand2 + 1, temp_operand + k) := '0';
+                                    end if;
+                                end loop;
+                                exit;
+                            end if;
                         end loop;
                     end if;
 

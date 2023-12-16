@@ -7,8 +7,8 @@ use work.package_coords.all;
 entity controller is
     port (
         CLK : in std_logic := '0';
-        ENABLE : in std_logic := '1';
-        instruction : in std_logic_vector (2 downto 0) := "110";
+        ENABLE : in std_logic := '0';
+        instruction : in std_logic_vector (2 downto 0);
         A : in integer := 1; -- constant A
         B : in integer := 0; -- constant B
         C : in integer := 0  -- constant C
